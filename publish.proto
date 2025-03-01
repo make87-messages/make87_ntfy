@@ -1,0 +1,53 @@
+syntax = "proto3";
+package make87_ntfy.publish;
+
+message MessagePayload {
+  string topic = 1;  // Required: Target topic name
+  optional string message = 2;  // Message body; set to triggered if empty or not passed
+  optional string title = 3;  // Message title
+  repeated string tags = 4;  // List of tags that may or may not map to emojis
+  optional MessagePayload.Priority priority = 5;  // Message priority
+  repeated MessagePayload.Action actions = 6;  // Custom user action buttons for notifications
+  optional string click = 7;  // Website opened when notification is clicked
+  optional string attach = 8;  // URL of an attachment
+  optional bool markdown = 9;  // Set to true if the message is Markdown-formatted
+  optional string icon = 10;  // URL to use as notification icon
+  optional string filename = 11;  // File name of the attachment
+  optional string delay = 12;  // Timestamp or duration for delayed delivery
+  optional string email = 13;  // E-mail address for e-mail notifications
+  optional string call = 14;  // Phone number to use for voice call (or "yes")
+
+  message Action {
+    string label = 1;  // Label for the action button
+    bool clear = 2;  // Clear notification after HTTP request succeeds. If the request fails, the notification is not cleared.
+    oneof action_type {
+      MessagePayload.ViewAction view = 3;
+      MessagePayload.BroadcastAction broadcast = 4;
+      MessagePayload.HttpAction http = 5;
+    }
+  }
+
+  message ViewAction {
+    string url = 1;  // URL to open
+  }
+
+  message BroadcastAction {
+    map<string, string> extras = 1;  // Key-value pairs for broadcast extras
+  }
+
+  message HttpAction {
+    string url = 1;  // URL to send request to
+    string method = 2;  // HTTP method (e.g., GET, POST, PUT, DELETE)
+    map<string, string> headers = 3;  // HTTP headers
+    string body = 4;  // HTTP body
+  }
+
+  enum Priority {
+    UNKNOWN = 0;  // Unknown priority
+    PRIORITY_MIN = 1;  // No vibration or sound, notification under the fold
+    PRIORITY_LOW = 2;  // No vibration or sound, visible only in the drawer
+    PRIORITY_DEFAULT = 3;  // Short default vibration and sound
+    PRIORITY_HIGH = 4;  // Long vibration burst, default sound, pop-over
+    PRIORITY_MAX = 5;  // Really long vibration bursts, default sound, pop-over
+  }
+}
