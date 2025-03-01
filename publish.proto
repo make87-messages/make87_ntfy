@@ -1,21 +1,23 @@
 syntax = "proto3";
 package make87_ntfy.publish;
+import "make87_messages/core/header.proto";
 
 message MessagePayload {
-  string topic = 1;  // Required: Target topic name
-  optional string message = 2;  // Message body; set to triggered if empty or not passed
-  optional string title = 3;  // Message title
-  repeated string tags = 4;  // List of tags that may or may not map to emojis
-  optional MessagePayload.Priority priority = 5;  // Message priority
-  repeated MessagePayload.Action actions = 6;  // Custom user action buttons for notifications
-  optional string click = 7;  // Website opened when notification is clicked
-  optional string attach = 8;  // URL of an attachment
-  optional bool markdown = 9;  // Set to true if the message is Markdown-formatted
-  optional string icon = 10;  // URL to use as notification icon
-  optional string filename = 11;  // File name of the attachment
-  optional string delay = 12;  // Timestamp or duration for delayed delivery
-  optional string email = 13;  // E-mail address for e-mail notifications
-  optional string call = 14;  // Phone number to use for voice call (or "yes")
+  make87_messages.core.Header header = 1;
+  string topic = 2;  // Required: Target topic name
+  optional string message = 3;  // Message body; set to triggered if empty or not passed
+  optional string title = 4;  // Message title
+  repeated string tags = 5;  // List of tags that may or may not map to emojis
+  optional MessagePayload.Priority priority = 6;  // Message priority
+  repeated MessagePayload.Action actions = 7;  // Custom user action buttons for notifications
+  optional string click = 8;  // Website opened when notification is clicked
+  optional string attach = 9;  // URL of an attachment
+  optional bool markdown = 10;  // Set to true if the message is Markdown-formatted
+  optional string icon = 11;  // URL to use as notification icon
+  optional string filename = 12;  // File name of the attachment
+  optional string delay = 13;  // Timestamp or duration for delayed delivery
+  optional string email = 14;  // E-mail address for e-mail notifications
+  optional string call = 15;  // Phone number to use for voice call (or "yes")
 
   message Action {
     string label = 1;  // Label for the action button
