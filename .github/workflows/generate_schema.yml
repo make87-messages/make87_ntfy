@@ -73,20 +73,26 @@ jobs:
         run: |
           cat > deref_each.js <<'EOF'
           #!/usr/bin/env node
+          const fs = require('fs');
           const deref = require('json-schema-deref-sync');
-          let input = '';
-          process.stdin.setEncoding('utf8');
-          process.stdin.on('data', chunk => { input += chunk; });
-          process.stdin.on('end', () => {
+
+          if (process.argv.length < 3) {
+            console.error('Usage: deref_each.js <file1.json> <file2.json> ...');
+            process.exit(1);
+          }
+
+          for (const file of process.argv.slice(2)) {
             try {
+              const input = fs.readFileSync(file, 'utf8');
               const parsed = JSON.parse(input);
               const dereferenced = deref(parsed, { clone: true });
-              process.stdout.write(JSON.stringify(dereferenced, null, 2));
+              fs.writeFileSync(file, JSON.stringify(dereferenced, null, 2));
+              console.log(`✅ Dereferenced ${file}`);
             } catch (err) {
-              console.error('Failed to dereference:', err.message);
+              console.error(`Failed to dereference ${file}:`, err.message);
               process.exit(1);
             }
-          });
+          }
           EOF
           chmod +x deref_each.js
 
@@ -107,13 +113,16 @@ jobs:
       - name: Dereference each JSON schema file
         run: |
           mkdir -p out_deref
-          find out -name '*.json' | while read -r file; do
+          find out -name '*.json' > json_files.txt
+          # Copy files to out_deref with flattened names
+          while read -r file; do
             schema_name="${file#out/}"
             schema_name="${schema_name%.json}"
             schema_name="${schema_name//\//.}"
-            node ./deref_each.js < "$file" > "out_deref/${schema_name}.json"
-            echo "✅ Dereferenced $file → out_deref/${schema_name}.json"
-          done
+            cp "$file" "out_deref/${schema_name}.json"
+          done < json_files.txt
+          # Now dereference all in one node call (in-place)
+          node ./deref_each.js $(find out_deref -name '*.json')
 
       - name: Combine dereferenced files into MAKE87.schemas.yml
         run: |
