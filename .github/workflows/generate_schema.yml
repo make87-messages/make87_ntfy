@@ -36,9 +36,9 @@ jobs:
       - name: Determine PROTO_DIR
         run: |
           if [ "${GITHUB_REPOSITORY}" != "${DEPENDENCY_REPO}" ]; then
-            echo "PROTO_DIR=make87_messages" >> $GITHUB_ENV
-          else
             echo "PROTO_DIR=${{ steps.current.outputs.name }}" >> $GITHUB_ENV
+          else
+            echo "PROTO_DIR=make87_messages" >> $GITHUB_ENV
           fi
 
       - name: Set up Node.js
