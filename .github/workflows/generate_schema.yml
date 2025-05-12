@@ -41,107 +41,32 @@ jobs:
             echo "PROTO_DIR=make87_messages" >> $GITHUB_ENV
           fi
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install deref dependency
-        run: npm install json-schema-deref-sync
-
-      - name: Set up Go and install protoc-gen-jsonschema
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
-
-      - name: Install protoc-gen-jsonschema
-        run: |
-          go install github.com/chrusty/protoc-gen-jsonschema/cmd/protoc-gen-jsonschema@latest
-          echo "$HOME/go/bin" >> $GITHUB_PATH
-
       - name: Install protoc
         run: |
           sudo apt-get update
           sudo apt-get install -y protobuf-compiler
 
-      - name: Install yq
+      - name: Generate descriptor.pb from proto
         run: |
-          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
-          chmod +x /usr/local/bin/yq
-
-      - name: Write deref_each.js helper
-        run: |
-          cat > deref_each.js <<'EOF'
-          #!/usr/bin/env node
-          const fs = require('fs');
-          const deref = require('json-schema-deref-sync');
-
-          if (process.argv.length < 3) {
-            console.error('Usage: deref_each.js <file1.json> <file2.json> ...');
-            process.exit(1);
-          }
-
-          for (const file of process.argv.slice(2)) {
-            try {
-              const input = fs.readFileSync(file, 'utf8');
-              const parsed = JSON.parse(input);
-              const dereferenced = deref(parsed, { clone: true });
-              fs.writeFileSync(file, JSON.stringify(dereferenced, null, 2));
-              console.log(`✅ Dereferenced ${file}`);
-            } catch (err) {
-              console.error(`Failed to dereference ${file}:`, err.message);
-              process.exit(1);
-            }
-          }
-          EOF
-          chmod +x deref_each.js
-
-      - name: Generate JSON schemas from proto
-        run: |
-          mkdir -p out
           find $PROTO_DIR -name '*.proto' > proto_files.txt
           protoc \
-            --plugin=$HOME/go/bin/protoc-gen-jsonschema \
-            --jsonschema_out=./out \
-            --jsonschema_opt=enforce_oneof \
-            --jsonschema_opt=json_fieldnames \
-            --jsonschema_opt=prefix_schema_files_with_package \
+            --include_imports \
+            --descriptor_set_out=descriptor.pb \
             -I . \
             --proto_path=. \
             $(cat proto_files.txt)
 
-      - name: Dereference each JSON schema file
+      - name: Download proto_parser binary
         run: |
-          mkdir -p out_deref
-          find out -name '*.json' > json_files.txt
-          # Copy files to out_deref with flattened names
-          while read -r file; do
-            schema_name="${file#out/}"
-            schema_name="${schema_name%.json}"
-            schema_name="${schema_name//\//.}"
-            cp "$file" "out_deref/${schema_name}.json"
-          done < json_files.txt
-          # Now dereference all in one node call (in-place)
-          node ./deref_each.js $(find out_deref -name '*.json')
+          wget https://make87-files.nyc3.digitaloceanspaces.com/releases/latest/proto_parser-x86_64-unknown-linux-gnu -O proto_parser
+          chmod +x proto_parser
 
-      - name: Combine dereferenced files into MAKE87.schemas.yml
+      - name: Generate MAKE87.schemas.yml from descriptor.pb
         run: |
-          cat > MAKE87.schemas.yml <<EOF
-          openapi: 3.1.0
-          info:
-            title: ${PROTO_DIR}
-            version: 0.0.0
-          components:
-            schemas:
-          EOF
-          find out_deref -type f -name '*.json' | while read -r file; do
-            base_name=$(basename "$file" .json)
-            echo "    \"$base_name\":" >> MAKE87.schemas.yml
-            yq -P -o=yaml "$file" | sed 's/^/      /' >> MAKE87.schemas.yml
-          done
+          ./proto_parser --output MAKE87.schemas.yml descriptor.pb
 
       - name: Commit schema file to branch (optional)
-        if: github.ref_type == 'branch'
+        if: github.ref_type == 'branch' && github.event_name != 'pull_request'
         run: |
           cp MAKE87.schemas.yml $PROTO_DIR/MAKE87.schemas.yml
           cd $PROTO_DIR
