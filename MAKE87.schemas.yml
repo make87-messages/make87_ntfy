@@ -1,147 +1,140 @@
-openapi: 3.1.0
-info:
-  title: make87_ntfy
-  version: 0.0.0
-components:
-  schemas:
-    "make87_ntfy.publish.MessagePayload":
-      properties:
-        header:
-          properties:
-            timestamp:
-              type: string
-              format: date-time
-            referenceId:
-              type: string
-            entityPath:
-              type: string
-              description: Slash-based entity path, e.g., "cameras/1/intrinsic"
-          additionalProperties: true
-          type: object
-          title: Header
-        topic:
-          type: string
-          description: 'Required: Target topic name'
-        message:
-          type: string
-          description: Message body; set to triggered if empty or not passed
-        title:
-          type: string
-          description: Message title
-        tags:
-          items:
-            type: string
-          type: array
-          description: List of tags that may or may not map to emojis
-        priority:
-          enum:
-            - UNKNOWN
-            - 0
-            - PRIORITY_MIN
-            - 1
-            - PRIORITY_LOW
-            - 2
-            - PRIORITY_DEFAULT
-            - 3
-            - PRIORITY_HIGH
-            - 4
-            - PRIORITY_MAX
-            - 5
-          oneOf:
-            - type: string
-            - type: integer
-          title: Priority
-        actions:
-          items:
-            properties:
-              label:
-                type: string
-                description: Label for the action button
-              clear:
-                type: boolean
-                description: Clear notification after HTTP request succeeds. If the request fails, the notification is not cleared.
-              view:
-                properties:
-                  url:
-                    type: string
-                    description: URL to open
-                additionalProperties: true
-                type: object
-                title: View Action
-              broadcast:
-                properties:
-                  extras:
-                    additionalProperties:
-                      type: string
-                    type: object
-                    description: Key-value pairs for broadcast extras
-                additionalProperties: true
-                type: object
-                title: Broadcast Action
-              http:
-                properties:
-                  url:
-                    type: string
-                    description: URL to send request to
-                  method:
-                    type: string
-                    description: HTTP method (e.g., GET, POST, PUT, DELETE)
-                  headers:
-                    additionalProperties:
-                      type: string
-                    type: object
-                    description: HTTP headers
-                  body:
-                    type: string
-                    description: HTTP body
-                additionalProperties: true
-                type: object
-                title: Http Action
-            additionalProperties: true
-            type: object
-            allOf:
-              - oneOf:
-                  - not:
-                      anyOf:
-                        - required:
-                            - view
-                        - required:
-                            - broadcast
-                        - required:
-                            - http
-                  - required:
-                      - view
-                  - required:
-                      - broadcast
-                  - required:
-                      - http
-            title: Action
-          type: array
-          description: Custom user action buttons for notifications
-        click:
-          type: string
-          description: Website opened when notification is clicked
-        attach:
-          type: string
-          description: URL of an attachment
-        markdown:
-          type: boolean
-          description: Set to true if the message is Markdown-formatted
-        icon:
-          type: string
-          description: URL to use as notification icon
-        filename:
-          type: string
-          description: File name of the attachment
-        delay:
-          type: string
-          description: Timestamp or duration for delayed delivery
-        email:
-          type: string
-          description: E-mail address for e-mail notifications
-        call:
-          type: string
-          description: Phone number to use for voice call (or "yes")
-      additionalProperties: true
-      type: object
-      title: Message Payload
+version: 0.0.1
+messages:
+- name: google.protobuf.Timestamp
+  fields:
+  - name: seconds
+    type: int64
+    index: 1
+  - name: nanos
+    type: int32
+    index: 2
+- name: make87_messages.core.Header
+  fields:
+  - name: timestamp
+    type: google.protobuf.Timestamp
+    index: 1
+  - name: reference_id
+    type: uint64
+    index: 2
+  - name: entity_path
+    type: string
+    index: 3
+- name: make87_ntfy.publish.MessagePayload
+  fields:
+  - name: header
+    type: make87_messages.core.Header
+    index: 1
+  - name: topic
+    type: string
+    index: 2
+  - name: message
+    type: string
+    index: 3
+  - name: title
+    type: string
+    index: 4
+  - name: tags
+    type: string
+    index: 5
+  - name: priority
+    type: make87_ntfy.publish.MessagePayload.Priority
+    index: 6
+  - name: actions
+    type: make87_ntfy.publish.MessagePayload.Action
+    index: 7
+  - name: click
+    type: string
+    index: 8
+  - name: attach
+    type: string
+    index: 9
+  - name: markdown
+    type: bool
+    index: 10
+  - name: icon
+    type: string
+    index: 11
+  - name: filename
+    type: string
+    index: 12
+  - name: delay
+    type: string
+    index: 13
+  - name: email
+    type: string
+    index: 14
+  - name: call
+    type: string
+    index: 15
+- name: make87_ntfy.publish.MessagePayload.Action
+  fields:
+  - name: label
+    type: string
+    index: 1
+  - name: clear
+    type: bool
+    index: 2
+  - name: view
+    type: make87_ntfy.publish.MessagePayload.ViewAction
+    index: 3
+  - name: broadcast
+    type: make87_ntfy.publish.MessagePayload.BroadcastAction
+    index: 4
+  - name: http
+    type: make87_ntfy.publish.MessagePayload.HttpAction
+    index: 5
+- name: make87_ntfy.publish.MessagePayload.ViewAction
+  fields:
+  - name: url
+    type: string
+    index: 1
+- name: make87_ntfy.publish.MessagePayload.BroadcastAction
+  fields:
+  - name: extras
+    type: make87_ntfy.publish.MessagePayload.BroadcastAction.ExtrasEntry
+    index: 1
+- name: make87_ntfy.publish.MessagePayload.BroadcastAction.ExtrasEntry
+  fields:
+  - name: key
+    type: string
+    index: 1
+  - name: value
+    type: string
+    index: 2
+- name: make87_ntfy.publish.MessagePayload.HttpAction
+  fields:
+  - name: url
+    type: string
+    index: 1
+  - name: method
+    type: string
+    index: 2
+  - name: headers
+    type: make87_ntfy.publish.MessagePayload.HttpAction.HeadersEntry
+    index: 3
+  - name: body
+    type: string
+    index: 4
+- name: make87_ntfy.publish.MessagePayload.HttpAction.HeadersEntry
+  fields:
+  - name: key
+    type: string
+    index: 1
+  - name: value
+    type: string
+    index: 2
+enums:
+- name: make87_ntfy.publish.MessagePayload.Priority
+  values:
+  - name: UNKNOWN
+    number: 0
+  - name: PRIORITY_MIN
+    number: 1
+  - name: PRIORITY_LOW
+    number: 2
+  - name: PRIORITY_DEFAULT
+    number: 3
+  - name: PRIORITY_HIGH
+    number: 4
+  - name: PRIORITY_MAX
+    number: 5
